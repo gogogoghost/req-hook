@@ -1,0 +1,37 @@
+{
+  "name": "intercepter.js",
+  "version": "1.0.0",
+  "description": "Easily intercept `fetch` or `XMLHttpRequest` in your project or Tampermonkey.",
+  "license": "MIT",
+  "author": "",
+  "type": "module",
+  "main": "dist/intercepter.cjs.js",
+  "module": "dist/intercepter.es.js",
+  "types": "dist/index.d.ts",
+  "repository": "git@github.com:gogogoghost/intercepter.js.git",
+  "homepage": "https://github.com/gogogoghost/intercepter.js",
+  "bugs": "https://github.com/gogogoghost/intercepter.js/issues",
+  "exports": {
+    ".": {
+      "import": "./dist/intercepter.es.js",
+      "require": "./dist/intercepter.cjs.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && vite build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "jsdom": "^29.0.2",
+    "playwright": "^1.59.1",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0",
+    "vitest": "^4.1.3"
+  }
+}

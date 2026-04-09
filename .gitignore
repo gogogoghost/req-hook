@@ -1,0 +1,23 @@
+node_modules/
+dist/
+
+# Claude Code
+.claude/
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
