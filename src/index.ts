@@ -175,7 +175,7 @@ export const add = function({
                 if (rule.pattern.test(reqUrl)) {
                     if (logConfig.request) console.log('[ReqHook] Request intercepted: ' + nativeRequest.method + ' ' + reqUrl);
                     if (rule.onBeforeRequest) {
-                        const result = rule.onBeforeRequest({ url: reqUrl, request: nativeRequest });
+                        const result = await rule.onBeforeRequest({ url: reqUrl, request: nativeRequest });
                         if (result !== undefined) {
                             modifiedRequest = result;
                         }
@@ -190,7 +190,7 @@ export const add = function({
                 if (rule.pattern.test(reqUrl)) {
                     if (rule.onAfterResponse) {
                         if (logConfig.response) console.log('[ReqHook] Response intercepted: ' + nativeRequest.method + ' ' + reqUrl);
-                        const result = rule.onAfterResponse({ url: reqUrl, request: nativeRequest, response });
+                        const result = await rule.onAfterResponse({ url: reqUrl, request: nativeRequest, response });
                         if (result !== undefined) {
                             return result;
                         }
@@ -225,7 +225,7 @@ export const add = function({
                                     const request = new XHRRequest(t);
                                     request.body = modifiedBody;
                                     xhrRequest = request;
-                                    const result = rule.onBeforeRequest({ url: reqUrl, request });
+                                    const result = await rule.onBeforeRequest({ url: reqUrl, request });
                                     if (result !== undefined && result instanceof Request) {
                                         modifiedBody = await result.clone().text().catch(() => modifiedBody);
                                     }
@@ -248,7 +248,7 @@ export const add = function({
                                                 xhrRequest = new XHRRequest(t);
                                             }
                                             const response = new XHRResponse(t, xhrRequest);
-                                            const result = rule.onAfterResponse({ url: t._url, request: xhrRequest, response });
+                                            const result = await rule.onAfterResponse({ url: t._url, request: xhrRequest, response });
                                             if (result !== undefined) {
                                                 const modText = await result.text();
                                                 Object.defineProperty(t, 'responseText', { value: modText, configurable: true });
