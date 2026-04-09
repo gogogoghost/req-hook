@@ -204,70 +204,159 @@ export const add = function({
             const xhr = new nXHR();
             let xhrRequest: XHRRequest | null = null;
 
+            // Store modified response data
+            let modifiedResponseText: string | null = null;
+            let modifiedStatus: number | null = null;
+
             // Store references to underlying methods before proxying
             const xhrOpen = xhr.open.bind(xhr);
             const xhrSend = xhr.send.bind(xhr);
 
-            return new Proxy(xhr, {
-                get: (t, p) => {
-                    if (p === 'open') return function(this: any, m: string, u: string, ...r: unknown[]) {
-                        t._url = u; t._method = m;
-                        return xhrOpen(m, u, ...r);
-                    };
-                    if (p === 'send') return async function(this: any, body?: unknown) {
-                        const reqUrl = t._url;
-                        let modifiedBody = body;
+            const wrappedXHR: any = {
+                _url: '',
+                _method: 'GET',
+                _body: undefined,
+                readyState: 0,
+                status: 0,
+                statusText: '',
+                responseText: '',
+                response: '',
+                headers: {},
+                onreadystatechange: null,
+                onload: null,
+                onerror: null,
+                onabort: null,
+                ontimeout: null,
+                timeout: 0,
+                withCredentials: false,
+                upload: xhr.upload,
+                UNSENT: 0,
+                OPENED: 1,
+                HEADERS_RECEIVED: 2,
+                LOADING: 3,
+                DONE: 4
+            };
 
-                        for (const rule of rules) {
-                            if (rule.pattern.test(reqUrl)) {
-                                if (logConfig.request) console.log('[ReqHook] Request intercepted: ' + t._method + ' ' + reqUrl);
-                                if (rule.onBeforeRequest) {
-                                    const request = new XHRRequest(t);
-                                    request.body = modifiedBody;
-                                    xhrRequest = request;
-                                    const result = await rule.onBeforeRequest({ url: reqUrl, request });
-                                    if (result !== undefined && result instanceof Request) {
-                                        modifiedBody = await result.clone().text().catch(() => modifiedBody);
-                                    }
-                                } else if (rule.onAfterResponse) {
-                                    // Even without onBeforeRequest, we need xhrRequest for onAfterResponse
-                                    xhrRequest = new XHRRequest(t);
-                                    xhrRequest.body = modifiedBody;
+            // Sync native XHR properties to wrapped XHR
+            const syncFromNative = () => {
+                wrappedXHR.readyState = xhr.readyState;
+                wrappedXHR.status = modifiedStatus !== null ? modifiedStatus : xhr.status;
+                wrappedXHR.statusText = xhr.statusText;
+                wrappedXHR.responseText = modifiedResponseText !== null ? modifiedResponseText : xhr.responseText;
+                wrappedXHR.response = modifiedResponseText !== null ? modifiedResponseText : xhr.response;
+                wrappedXHR._url = wrappedXHR._url || xhr.responseURL || '';
+            };
+
+            // Handle readyState changes
+            const handleReadyStateChange = async () => {
+                syncFromNative();
+
+                if (xhr.readyState === 4) {
+                    const reqUrl = wrappedXHR._url;
+
+                    for (const rule of rules) {
+                        if (rule.pattern.test(reqUrl)) {
+                            if (logConfig.request) console.log('[ReqHook] Request intercepted: ' + wrappedXHR._method + ' ' + reqUrl);
+                            if (rule.onBeforeRequest && xhrRequest) {
+                                const result = await rule.onBeforeRequest({ url: reqUrl, request: xhrRequest });
+                                if (result !== undefined && result instanceof Request) {
+                                    wrappedXHR._body = await result.clone().text().catch(() => wrappedXHR._body);
                                 }
                             }
                         }
+                    }
 
-                        const rawState = t.onreadystatechange;
-                        t.onreadystatechange = async function(this: any, ...a: unknown[]) {
-                            if (t.readyState === 4) {
-                                for (const rule of rules) {
-                                    if (rule.pattern.test(t._url)) {
-                                        if (rule.onAfterResponse) {
-                                            if (logConfig.response) console.log('[ReqHook] Response intercepted: ' + t._method + ' ' + t._url);
-                                            if (!xhrRequest) {
-                                                xhrRequest = new XHRRequest(t);
-                                            }
-                                            const response = new XHRResponse(t, xhrRequest);
-                                            const result = await rule.onAfterResponse({ url: t._url, request: xhrRequest, response });
-                                            if (result !== undefined) {
-                                                const modText = await result.text();
-                                                Object.defineProperty(t, 'responseText', { value: modText, configurable: true });
-                                                Object.defineProperty(t, 'response', { value: modText, configurable: true });
-                                                Object.defineProperty(t, 'status', { value: result.status, configurable: true });
-                                            }
-                                        }
-                                    }
+                    // Handle response interception FIRST, then call user's handlers
+                    for (const rule of rules) {
+                        if (rule.pattern.test(reqUrl)) {
+                            if (rule.onAfterResponse) {
+                                if (logConfig.response) console.log('[ReqHook] Response intercepted: ' + wrappedXHR._method + ' ' + reqUrl);
+
+                                const request = xhrRequest || new XHRRequest(xhr);
+                                const response = new XHRResponse(xhr, request);
+                                const result = await rule.onAfterResponse({ url: reqUrl, request, response });
+
+                                if (result !== undefined) {
+                                    modifiedResponseText = await result.text();
+                                    modifiedStatus = result.status;
                                 }
                             }
-                            return rawState && rawState.apply(t, a);
-                        };
-                        return xhrSend(modifiedBody);
-                    };
-                    const val = t[p];
-                    return (typeof val === 'function') ? val.bind(t) : val;
-                },
-                set: (t, p, v) => { (t as any)[p] = v; return true; }
-            });
+                        }
+                    }
+
+                    // Sync modified values
+                    syncFromNative();
+
+                    // Call onload first
+                    if (wrappedXHR.onload) {
+                        wrappedXHR.onload.call(wrappedXHR);
+                    }
+
+                    // Then call onreadystatechange
+                    if (wrappedXHR.onreadystatechange) {
+                        wrappedXHR.onreadystatechange.call(wrappedXHR);
+                    }
+                } else {
+                    if (wrappedXHR.onreadystatechange) {
+                        wrappedXHR.onreadystatechange.call(wrappedXHR);
+                    }
+                }
+            };
+
+            // Intercept native xhr events
+            xhr.onreadystatechange = handleReadyStateChange;
+            xhr.onload = () => {
+                syncFromNative();
+                if (wrappedXHR.onload) wrappedXHR.onload.call(wrappedXHR);
+            };
+            xhr.onerror = () => {
+                if (wrappedXHR.onerror) wrappedXHR.onerror.call(wrappedXHR);
+            };
+            xhr.onabort = () => {
+                if (wrappedXHR.onabort) wrappedXHR.onabort.call(wrappedXHR);
+            };
+            xhr.ontimeout = () => {
+                if (wrappedXHR.ontimeout) wrappedXHR.ontimeout.call(wrappedXHR);
+            };
+
+            wrappedXHR.open = function(m: string, u: string, ...r: unknown[]) {
+                wrappedXHR._method = m;
+                wrappedXHR._url = u;
+                xhrOpen(m, u, ...r);
+            };
+
+            wrappedXHR.send = function(body?: unknown) {
+                wrappedXHR._body = body;
+
+                // Handle onBeforeRequest
+                for (const rule of rules) {
+                    if (rule.pattern.test(wrappedXHR._url)) {
+                        if (logConfig.request) console.log('[ReqHook] Request intercepted: ' + wrappedXHR._method + ' ' + wrappedXHR._url);
+                        if (rule.onBeforeRequest) {
+                            xhrRequest = new XHRRequest(xhr);
+                            xhrRequest.body = body;
+                            const result = rule.onBeforeRequest({ url: wrappedXHR._url, request: xhrRequest });
+                            if (result !== undefined && result instanceof Request) {
+                                result.clone().text().then(text => {
+                                    wrappedXHR._body = text;
+                                    xhr.send(text);
+                                }).catch(() => xhr.send(body));
+                                return;
+                            }
+                        }
+                    }
+                }
+                xhrSend(wrappedXHR._body);
+            };
+
+            wrappedXHR.setRequestHeader = (name: string, value: string) => xhr.setRequestHeader(name, value);
+            wrappedXHR.getResponseHeader = (name: string) => xhr.getResponseHeader(name);
+            wrappedXHR.getAllResponseHeaders = () => xhr.getAllResponseHeaders();
+            wrappedXHR.abort = () => xhr.abort();
+            wrappedXHR.overrideMimeType = (mime: string) => xhr.overrideMimeType(mime);
+            wrappedXHR.toString = () => '[object XMLHttpRequest]';
+
+            return wrappedXHR;
         };
 
         const silentLock = (obj: any, prop: string, value: unknown) => {

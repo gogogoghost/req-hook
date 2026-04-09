@@ -41,7 +41,7 @@ add({
 ### Script Tag (CDN)
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/req-hook@1.0.3/dist/req-hook.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/req-hook@1.0.4/dist/req-hook.iife.js"></script>
 <script>
   reqHook.init();
 
@@ -69,7 +69,7 @@ add({
 ```javascript
 // ==UserScript==
 // @name         My ReqHook Script
-// @require      https://cdn.jsdelivr.net/npm/req-hook@1.0.3/dist/req-hook.iife.js
+// @require      https://cdn.jsdelivr.net/npm/req-hook@1.0.4/dist/req-hook.iife.js
 // @match        *://api.example.com/*
 // ==/UserScript==
 
