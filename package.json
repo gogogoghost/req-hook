@@ -1,6 +1,6 @@
 {
   "name": "req-hook",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Easily intercept `fetch` or `XMLHttpRequest` in your project or Tampermonkey.",
   "license": "MIT",
   "author": "",

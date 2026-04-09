@@ -42,16 +42,16 @@ test.describe('iframe mode', () => {
             };
         });
 
-        // Load intercepter.js (IIFE build attaches to window.reqHook)
+        // Load req-hook.js (IIFE build attaches to window.reqHook)
         const scriptContent = readFileSync(resolve(__dirname, '../dist/req-hook.iife.js'), 'utf-8');
         await page.addScriptTag({ content: scriptContent });
 
         // Initialize with iframe mode
         await page.evaluate(() => {
             const win = window as any;
-            win.intercepter.init({ mode: 'iframe' });
+            win.reqHook.init({ mode: 'iframe' });
 
-            win.intercepter.add({
+            win.reqHook.add({
                 url: /api\.example\.com\/test/,
                 onBeforeRequest: ({ url }: { url: string }) => {
                     console.log('[Test] onBeforeRequest called for:', url);
@@ -79,13 +79,13 @@ test.describe('iframe mode', () => {
     });
 
     test('iframe should be created and hidden', async ({ page }) => {
-        // Load intercepter.js (IIFE build attaches to window.reqHook)
+        // Load req-hook.js (IIFE build attaches to window.reqHook)
         const scriptContent = readFileSync(resolve(__dirname, '../dist/req-hook.iife.js'), 'utf-8');
         await page.addScriptTag({ content: scriptContent });
 
         // Initialize with iframe mode
         await page.evaluate(() => {
-            (window as any).intercepter.init({ mode: 'iframe' });
+            (window as any).reqHook.init({ mode: 'iframe' });
         });
 
         // Check that an iframe with id starting with 'native-bridge-' was created
@@ -95,13 +95,13 @@ test.describe('iframe mode', () => {
     });
 
     test('iframe contentWindow should have native fetch and XMLHttpRequest', async ({ page }) => {
-        // Load intercepter.js (IIFE build attaches to window.reqHook)
+        // Load req-hook.js (IIFE build attaches to window.reqHook)
         const scriptContent = readFileSync(resolve(__dirname, '../dist/req-hook.iife.js'), 'utf-8');
         await page.addScriptTag({ content: scriptContent });
 
         // Initialize with iframe mode
         const result = await page.evaluate(() => {
-            (window as any).intercepter.init({ mode: 'iframe' });
+            (window as any).reqHook.init({ mode: 'iframe' });
 
             // Find the iframe
             const iframe = document.querySelector('iframe[id^="native-bridge-"]') as HTMLIFrameElement;

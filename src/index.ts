@@ -111,10 +111,10 @@ class XHRResponse {
 }
 
 const logConfig = {
-    init: false,
-    blocked: false,
-    request: false,
-    response: false
+    init: true,
+    blocked: true,
+    request: true,
+    response: true
 };
 
 export const init = function({ mode = 'local', log }: { mode?: 'local' | 'iframe'; log?: { init?: boolean; blocked?: boolean; request?: boolean; response?: boolean } } = {}) {
@@ -143,7 +143,7 @@ export const init = function({ mode = 'local', log }: { mode?: 'local' | 'iframe
     }
 
     initialized = true;
-    if (logConfig.init) console.log('[Interceptor] Initialized (' + mode + ' mode)');
+    if (logConfig.init) console.log('[ReqHook] Initialized (' + mode + ' mode)');
 };
 
 export const add = function({
@@ -156,7 +156,7 @@ export const add = function({
     onAfterResponse?: OnAfterResponse;
 }) {
     if (!initialized) {
-        console.warn('[Interceptor] Not initialized. Call init() first.');
+        console.warn('[ReqHook] Not initialized. Call init() first.');
         return;
     }
 
@@ -173,7 +173,7 @@ export const add = function({
 
             for (const rule of rules) {
                 if (rule.pattern.test(reqUrl)) {
-                    if (logConfig.request) console.log('[Interceptor] Request intercepted: ' + reqUrl);
+                    if (logConfig.request) console.log('[ReqHook] Request intercepted: ' + nativeRequest.method + ' ' + reqUrl);
                     if (rule.onBeforeRequest) {
                         const result = rule.onBeforeRequest({ url: reqUrl, request: nativeRequest });
                         if (result !== undefined) {
@@ -189,7 +189,7 @@ export const add = function({
             for (const rule of rules) {
                 if (rule.pattern.test(reqUrl)) {
                     if (rule.onAfterResponse) {
-                        if (logConfig.response) console.log('[Interceptor] Response intercepted: ' + reqUrl);
+                        if (logConfig.response) console.log('[ReqHook] Response intercepted: ' + nativeRequest.method + ' ' + reqUrl);
                         const result = rule.onAfterResponse({ url: reqUrl, request: nativeRequest, response });
                         if (result !== undefined) {
                             return result;
@@ -220,7 +220,7 @@ export const add = function({
 
                         for (const rule of rules) {
                             if (rule.pattern.test(reqUrl)) {
-                                if (logConfig.request) console.log('[Interceptor] Request intercepted: ' + reqUrl);
+                                if (logConfig.request) console.log('[ReqHook] Request intercepted: ' + t._method + ' ' + reqUrl);
                                 if (rule.onBeforeRequest) {
                                     const request = new XHRRequest(t);
                                     request.body = modifiedBody;
@@ -229,6 +229,10 @@ export const add = function({
                                     if (result !== undefined && result instanceof Request) {
                                         modifiedBody = await result.clone().text().catch(() => modifiedBody);
                                     }
+                                } else if (rule.onAfterResponse) {
+                                    // Even without onBeforeRequest, we need xhrRequest for onAfterResponse
+                                    xhrRequest = new XHRRequest(t);
+                                    xhrRequest.body = modifiedBody;
                                 }
                             }
                         }
@@ -238,8 +242,11 @@ export const add = function({
                             if (t.readyState === 4) {
                                 for (const rule of rules) {
                                     if (rule.pattern.test(t._url)) {
-                                        if (rule.onAfterResponse && xhrRequest) {
-                                            if (logConfig.response) console.log('[Interceptor] Response intercepted: ' + t._url);
+                                        if (rule.onAfterResponse) {
+                                            if (logConfig.response) console.log('[ReqHook] Response intercepted: ' + t._method + ' ' + t._url);
+                                            if (!xhrRequest) {
+                                                xhrRequest = new XHRRequest(t);
+                                            }
                                             const response = new XHRResponse(t, xhrRequest);
                                             const result = rule.onAfterResponse({ url: t._url, request: xhrRequest, response });
                                             if (result !== undefined) {
@@ -268,7 +275,7 @@ export const add = function({
                 Object.defineProperty(obj, prop, {
                     get: () => value,
                     set: () => {
-                        if (logConfig.blocked) console.log('[Interceptor] Blocked attempt to override ' + prop);
+                        if (logConfig.blocked) console.log('[ReqHook] Blocked attempt to override ' + prop);
                         return true;
                     },
                     configurable: true,
@@ -284,7 +291,7 @@ export const add = function({
         silentLock(target, 'XMLHttpRequest', hookedXHR);
     }
 
-    if (logConfig.init) console.log('[Interceptor] Mounted');
+    if (logConfig.init) console.log('[ReqHook] Mounted');
 };
 
 export const remove = function(url: string | RegExp) {
@@ -292,8 +299,8 @@ export const remove = function(url: string | RegExp) {
     const index = rules.findIndex(r => r.pattern.toString() === pattern.toString());
     if (index !== -1) {
         rules.splice(index, 1);
-        console.log('[Interceptor] Rule removed');
+        console.log('[ReqHook] Rule removed');
     } else {
-        console.warn('[Interceptor] Rule not found');
+        console.warn('[ReqHook] Rule not found');
     }
 };
