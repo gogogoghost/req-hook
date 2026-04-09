@@ -42,8 +42,8 @@ test.describe('iframe mode', () => {
             };
         });
 
-        // Load intercepter.js (IIFE build attaches to window.intercepter)
-        const scriptContent = readFileSync(resolve(__dirname, '../dist/intercepter.iife.js'), 'utf-8');
+        // Load intercepter.js (IIFE build attaches to window.reqHook)
+        const scriptContent = readFileSync(resolve(__dirname, '../dist/req-hook.iife.js'), 'utf-8');
         await page.addScriptTag({ content: scriptContent });
 
         // Initialize with iframe mode
@@ -79,8 +79,8 @@ test.describe('iframe mode', () => {
     });
 
     test('iframe should be created and hidden', async ({ page }) => {
-        // Load intercepter.js (IIFE build attaches to window.intercepter)
-        const scriptContent = readFileSync(resolve(__dirname, '../dist/intercepter.iife.js'), 'utf-8');
+        // Load intercepter.js (IIFE build attaches to window.reqHook)
+        const scriptContent = readFileSync(resolve(__dirname, '../dist/req-hook.iife.js'), 'utf-8');
         await page.addScriptTag({ content: scriptContent });
 
         // Initialize with iframe mode
@@ -95,8 +95,8 @@ test.describe('iframe mode', () => {
     });
 
     test('iframe contentWindow should have native fetch and XMLHttpRequest', async ({ page }) => {
-        // Load intercepter.js (IIFE build attaches to window.intercepter)
-        const scriptContent = readFileSync(resolve(__dirname, '../dist/intercepter.iife.js'), 'utf-8');
+        // Load intercepter.js (IIFE build attaches to window.reqHook)
+        const scriptContent = readFileSync(resolve(__dirname, '../dist/req-hook.iife.js'), 'utf-8');
         await page.addScriptTag({ content: scriptContent });
 
         // Initialize with iframe mode

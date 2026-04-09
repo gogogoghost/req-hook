@@ -1,13 +1,13 @@
-# intercepter.js
+# req-hook
 
-[![npm](https://img.shields.io/npm/v/intercepter.js)](https://www.npmjs.com/package/intercepter.js)
+[![npm](https://img.shields.io/npm/v/req-hook)](https://www.npmjs.com/package/req-hook)
 
 Easily intercept `fetch` and `XMLHttpRequest` in your project or Tampermonkey.
 
 ## Install
 
 ```bash
-npm install intercepter.js
+npm install req-hook
 ```
 
 ## Usage
@@ -15,7 +15,7 @@ npm install intercepter.js
 ### ES Module
 
 ```javascript
-import { init, add } from 'intercepter.js';
+import { init, add } from 'req-hook';
 
 init();
 
@@ -41,11 +41,11 @@ add({
 ### Script Tag (CDN)
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/intercepter.js/dist/intercepter.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/req-hook/dist/req-hook.iife.js"></script>
 <script>
-  window.intercepter.init();
+  window.reqHook.init();
 
-  window.intercepter.add({
+  window.reqHook.add({
     url: 'api.example.com', // string or RegExp
     onBeforeRequest: ({ url, request }) => {
       const headers = new Headers(request.headers);
@@ -68,14 +68,14 @@ add({
 
 ```javascript
 // ==UserScript==
-// @name         My Intercepter Script
-// @require      https://cdn.jsdelivr.net/npm/intercepter.js/dist/intercepter.iife.js
+// @name         My ReqHook Script
+// @require      https://cdn.jsdelivr.net/npm/req-hook/dist/req-hook.iife.js
 // @match        *://api.example.com/*
 // ==/UserScript==
 
 (function() {
-    window.intercepter.init();
-    window.intercepter.add({
+    window.reqHook.init();
+    window.reqHook.add({
         url: 'api.example.com',
         onBeforeRequest: ({ url, request }) => request,
         onAfterResponse: ({ url, response }) => response

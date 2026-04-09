@@ -1,20 +1,20 @@
 {
-  "name": "intercepter.js",
+  "name": "req-hook",
   "version": "1.0.0",
   "description": "Easily intercept `fetch` or `XMLHttpRequest` in your project or Tampermonkey.",
   "license": "MIT",
   "author": "",
   "type": "module",
-  "main": "dist/intercepter.cjs.js",
-  "module": "dist/intercepter.es.js",
+  "main": "dist/req-hook.cjs.js",
+  "module": "dist/req-hook.es.js",
   "types": "dist/index.d.ts",
-  "repository": "git@github.com:gogogoghost/intercepter.js.git",
-  "homepage": "https://github.com/gogogoghost/intercepter.js",
-  "bugs": "https://github.com/gogogoghost/intercepter.js/issues",
+  "repository": "git@github.com:gogogoghost/req-hook.git",
+  "homepage": "https://github.com/gogogoghost/req-hook",
+  "bugs": "https://github.com/gogogoghost/req-hook/issues",
   "exports": {
     ".": {
-      "import": "./dist/intercepter.es.js",
-      "require": "./dist/intercepter.cjs.js",
+      "import": "./dist/req-hook.es.js",
+      "require": "./dist/req-hook.cjs.js",
       "types": "./dist/index.d.ts"
     }
   },

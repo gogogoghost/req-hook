@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { init, add, remove } from '../src/index';
 
-describe('intercepter.js', () => {
+describe('req-hook', () => {
     let mockFetch: ReturnType<typeof vi.fn>;
     let mockXHR: ReturnType<typeof vi.fn>;
 
